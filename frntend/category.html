@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habesha Dating - Category</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">Habesha Dating</div>
+            <div class="nav-links">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="explore.html" class="nav-link">Explore</a>
+                <a href="category.html" class="nav-link active">Category</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="#" class="nav-link" id="logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Category Page Content -->
+    <div class="page-container">
+        <div class="category-page">
+            <h2>Browse by Category</h2>
+            <div class="categories">
+                <div class="category-card" data-category="creativity">
+                    <i class='bx bxs-palette'></i>
+                    <h3>Creativity</h3>
+                </div>
+                <div class="category-card" data-category="technology">
+                    <i class='bx bxs-microchip'></i>
+                    <h3>Technology & IT</h3>
+                </div>
+                <div class="category-card" data-category="introverts">
+                    <i class='bx bxs-book'></i>
+                    <h3>Introverts</h3>
+                </div>
+                <div class="category-card" data-category="extroverts">
+                    <i class='bx bxs-party'></i>
+                    <h3>Extroverts</h3>
+                </div>
+                <div class="category-card" data-category="sports">
+                    <i class='bx bxs-football'></i>
+                    <h3>Sports</h3>
+                </div>
+                <div class="category-card" data-category="movies">
+                    <i class='bx bxs-movie'></i>
+                    <h3>Movies</h3>
+                </div>
+                <div class="category-card" data-category="others">
+                    <i class='bx bxs-category'></i>
+                    <h3>Others</h3>
+                </div>
+            </div>
+            <div class="category-results">
+                <h3 id="category-title">Select a category to view profiles</h3>
+                <div class="profiles-grid" id="category-profiles">
+                    <!-- Category-specific profiles will be dynamically generated -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        // Load profiles by category
+        function loadCategoryProfiles(category) {
+            const categoryProfiles = document.getElementById('category-profiles');
+            const categoryTitle = document.getElementById('category-title');
+            const allProfiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            
+            categoryTitle.textContent = `Profiles in ${category.charAt(0).toUpperCase() + category.slice(1)}`;
+            categoryProfiles.innerHTML = '';
+            
+            // Filter profiles by category and exclude current user
+            const filteredProfiles = allProfiles.filter(profile => 
+                profile.interests.includes(category) && 
+                profile.id !== currentUser.id
+            );
+            
+            if (filteredProfiles.length === 0) {
+                categoryProfiles.innerHTML = '<p class="no-profiles">No profiles found in this category.</p>';
+                return;
+            }
+            
+            filteredProfiles.forEach(profile => {
+                const profileCard = document.createElement('div');
+                profileCard.className = 'profile-card';
+                
+                profileCard.innerHTML = `
+                    <img src="${profile.photo}" alt="${profile.username}" class="profile-img">
+                    <div class="profile-info">
+                        <h3 class="profile-name">${profile.username}</h3>
+                        <div class="profile-details">
+                            <p>${profile.age} • ${profile.sex} • ${profile.religion}</p>
+                        </div>
+                        <p class="profile-bio">${profile.bio}</p>
+                        <div class="profile-interests">
+                            ${profile.interests.map(interest => 
+                                `<span class="interest-badge">${interest}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                categoryProfiles.appendChild(profileCard);
+            });
+        }
+
+        // Category selection
+        document.querySelectorAll('.category-card').forEach(card => {
+            card.addEventListener('click', () => {
+                const category = card.dataset.category;
+                loadCategoryProfiles(category);
+            });
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

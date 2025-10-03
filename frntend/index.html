@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habesha Dating - Login</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="login-container">
+        <div class="container" id="login-container">
+            <div class="form-box login">
+                <form id="login-form">
+                    <h1>Login</h1>
+                    <div class="input-box">
+                        <input type="text" placeholder="Username" required id="login-username">
+                        <i class='bx bxs-user'></i>
+                    </div>
+                    <div class="input-box">     
+                        <input type="password" placeholder="Password" required id="login-password">
+                        <i class='bx bxs-lock-alt'></i>
+                    </div>
+                    <div class="forgot-link">
+                        <a href="#">Forgot password?</a>
+                    </div>
+                    <button type="submit" class="btn">Login</button>
+                    <p>Or login with social platforms</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="bx bxl-google"></i></a>
+                        <a href="#"><i class="bx bxl-facebook"></i></a>
+                        <a href="#"><i class="bx bxl-apple"></i></a>
+                    </div>
+                </form>
+            </div>
+            <div class="form-box register">
+                <form id="register-form">
+                    <h1>Registration</h1>
+                    <div class="input-box">
+                        <input type="text" placeholder="Username" required id="register-username">
+                        <i class='bx bxs-user'></i>
+                    </div>
+                    <div class="input-box">
+                        <input type="email" placeholder="Email" required id="register-email">
+                        <i class='bx bxs-envelope'></i>
+                    </div>
+                    <div class="input-box">     
+                        <input type="password" placeholder="Password" required id="register-password">
+                        <i class='bx bxs-lock-alt'></i>
+                    </div>
+                    <div class="input-box">     
+                        <input type="password" placeholder="Confirm Password" required id="register-confirm-password">
+                        <i class='bx bxs-lock-alt'></i>
+                    </div>
+                    <button type="submit" class="btn">Register</button>
+                    <p>Or register with social platforms</p>
+                    <div class="social-icons">
+                        <a href="#"><i class="bx bxl-google"></i></a>
+                        <a href="#"><i class="bx bxl-facebook"></i></a>
+                        <a href="#"><i class="bx bxl-apple"></i></a>
+                    </div>
+                </form>
+            </div>
+            <div class="toggle-box">
+                <div class="toggle-panel toggle-left">
+                    <h1>Hello, Welcome!</h1>
+                    <p>Don't have an account?</p>
+                    <button class="btn register-btn">Register</button>
+                </div>
+                <div class="toggle-panel toggle-right">
+                    <h1>Welcome Back!</h1>
+                    <p>Already have an account?</p>
+                    <button class="btn login-btn">Login</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const container = document.querySelector('.container');
+        const registerBtn = document.querySelector('.register-btn');
+        const loginBtn = document.querySelector('.login-btn');
+        const loginForm = document.getElementById('login-form');
+        const registerForm = document.getElementById('register-form');
+
+        // Login/Register toggle
+        registerBtn.addEventListener("click", () => {
+            container.classList.add('active');
+        });
+        
+        loginBtn.addEventListener("click", () => {
+            container.classList.remove('active');
+        });
+
+        // Login form submission
+        loginForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('login-username').value;
+            const password = document.getElementById('login-password').value;
+            
+            // Simple validation
+            if (username && password) {
+                // Check if user exists
+                const users = JSON.parse(localStorage.getItem('habeshaUsers') || '[]');
+                const user = users.find(u => u.username === username && u.password === password);
+                
+                if (user) {
+                    localStorage.setItem('currentUser', JSON.stringify(user));
+                    if (user.profileCompleted) {
+                        window.location.href = 'home.html';
+                    } else {
+                        window.location.href = 'profile-setup.html';
+                    }
+                } else {
+                    alert('Invalid username or password');
+                }
+            } else {
+                alert('Please enter both username and password');
+            }
+        });
+
+        // Register form submission
+        registerForm.addEventListener('submit', (e) => {
+            e.preventDefault();
+            const username = document.getElementById('register-username').value;
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm-password').value;
+            
+            if (password !== confirmPassword) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            if (username && email && password) {
+                // Check if username already exists
+                const users = JSON.parse(localStorage.getItem('habeshaUsers') || '[]');
+                if (users.find(u => u.username === username)) {
+                    alert('Username already exists');
+                    return;
+                }
+                
+                // Create new user
+                const newUser = {
+                    id: Date.now(),
+                    username: username,
+                    email: email,
+                    password: password,
+                    profileCompleted: false
+                };
+                
+                users.push(newUser);
+                localStorage.setItem('habeshaUsers', JSON.stringify(users));
+                localStorage.setItem('currentUser', JSON.stringify(newUser));
+                
+                // Redirect to profile setup
+                window.location.href = 'profile-setup.html';
+            } else {
+                alert('Please fill in all fields');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Export Profiles - Habesha Dating</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">Habesha Dating</div>
+            <div class="nav-links">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="explore.html" class="nav-link">Explore</a>
+                <a href="category.html" class="nav-link">Category</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="#" class="nav-link" id="logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <div class="profile-setup">
+            <h2>Export All Profiles</h2>
+            <p>Download all user profiles as a JSON file for backup or analysis.</p>
+            <button class="btn" id="export-all-btn">Export All Profiles as JSON</button>
+            <div id="export-status" style="margin-top: 20px;"></div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        document.getElementById('export-all-btn').addEventListener('click', () => {
+            const profiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            
+            if (profiles.length === 0) {
+                document.getElementById('export-status').innerHTML = '<p style="color: #e74c3c;">No profiles found to export.</p>';
+                return;
+            }
+
+            const exportData = {
+                exportedAt: new Date().toISOString(),
+                totalProfiles: profiles.length,
+                profiles: profiles
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `habesha-dating-all-profiles-${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+
+            document.getElementById('export-status').innerHTML = `<p style="color: #27ae60;">Successfully exported ${profiles.length} profiles!</p>`;
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

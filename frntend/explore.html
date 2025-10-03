@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habesha Dating - Explore</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">Habesha Dating</div>
+            <div class="nav-links">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="explore.html" class="nav-link active">Explore</a>
+                <a href="category.html" class="nav-link">Category</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="#" class="nav-link" id="logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Explore Page Content -->
+    <div class="page-container">
+        <div class="explore-page">
+            <h2>Explore Profiles</h2>
+            <div class="profiles-grid" id="profiles-grid">
+                <!-- Profile cards will be dynamically generated -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        // Load profiles for explore page
+        function loadExploreProfiles() {
+            const profilesGrid = document.getElementById('profiles-grid');
+            const allProfiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            
+            profilesGrid.innerHTML = '';
+            
+            // Filter out current user's profile and only show completed profiles
+            const otherProfiles = allProfiles.filter(profile => 
+                profile.id !== currentUser.id
+            );
+            
+            if (otherProfiles.length === 0) {
+                profilesGrid.innerHTML = '<p class="no-profiles">No other profiles found. Be the first to create a profile!</p>';
+                return;
+            }
+            
+            otherProfiles.forEach(profile => {
+                const profileCard = document.createElement('div');
+                profileCard.className = 'profile-card';
+                
+                profileCard.innerHTML = `
+                    <img src="${profile.photo}" alt="${profile.username}" class="profile-img">
+                    <div class="profile-info">
+                        <h3 class="profile-name">${profile.username}</h3>
+                        <div class="profile-details">
+                            <p>${profile.age} • ${profile.sex} • ${profile.religion}</p>
+                        </div>
+                        <p class="profile-bio">${profile.bio}</p>
+                        <div class="profile-interests">
+                            ${profile.interests.map(interest => 
+                                `<span class="interest-badge">${interest}</span>`
+                            ).join('')}
+                        </div>
+                    </div>
+                `;
+                
+                profilesGrid.appendChild(profileCard);
+            });
+        }
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+
+        // Load profiles on page load
+        document.addEventListener('DOMContentLoaded', loadExploreProfiles);
+    </script>
+</body>
+</html>

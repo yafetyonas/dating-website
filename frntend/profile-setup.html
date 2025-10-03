@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habesha Dating - Profile Setup</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">Habesha Dating</div>
+            <div class="nav-links">
+                <a href="#" class="nav-link" id="logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Setup Content -->
+    <div class="page-container">
+        <div class="profile-setup">
+            <h2 id="setup-title">Complete Your Profile</h2>
+            <form id="profile-setup-form">
+                <div class="form-group">
+                    <label for="age">Age</label>
+                    <input type="number" id="age" min="18" max="100" required>
+                </div>
+                <div class="form-group">
+                    <label for="sex">Sex</label>
+                    <select id="sex" required>
+                        <option value="">Select</option>
+                        <option value="male">Male</option>
+                        <option value="female">Female</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="religion">Religion</label>
+                    <select id="religion" required>
+                        <option value="">Select</option>
+                        <option value="christian">Christian</option>
+                        <option value="muslim">Muslim</option>
+                        <option value="other">Other</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label for="photo">Profile Picture</label>
+                    <input type="file" id="photo" accept="image/*" required>
+                    <div id="image-preview" class="image-preview">
+                        <img id="preview-img" src="" alt="Preview">
+                    </div>
+                    <small>Upload a profile picture from your device</small>
+                </div>
+                <div class="form-group">
+                    <label for="bio">Short Bio</label>
+                    <textarea id="bio" placeholder="Tell us about yourself..." required></textarea>
+                </div>
+                <div class="form-group">
+                    <label>Interests (Select at least one)</label>
+                    <div class="interests-container">
+                        <div class="interest-tag" data-interest="creativity">Creativity</div>
+                        <div class="interest-tag" data-interest="technology">Technology & IT</div>
+                        <div class="interest-tag" data-interest="introverts">Introverts</div>
+                        <div class="interest-tag" data-interest="extroverts">Extroverts</div>
+                        <div class="interest-tag" data-interest="sports">Sports</div>
+                        <div class="interest-tag" data-interest="movies">Movies</div>
+                        <div class="interest-tag" data-interest="others">Others</div>
+                    </div>
+                </div>
+                <button type="submit" class="btn" id="submit-btn">Complete Profile</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        // Check if we're in edit mode (user has completed profile)
+        const isEditMode = currentUser.profileCompleted;
+        let selectedInterests = currentUser.interests || [];
+
+        // Initialize form for edit mode
+        if (isEditMode) {
+            document.getElementById('setup-title').textContent = 'Edit Your Profile';
+            document.getElementById('submit-btn').textContent = 'Update Profile';
+            
+            // Populate form with existing data
+            document.getElementById('age').value = currentUser.age || '';
+            document.getElementById('sex').value = currentUser.sex || '';
+            document.getElementById('religion').value = currentUser.religion || '';
+            document.getElementById('bio').value = currentUser.bio || '';
+            
+            // Select existing interests
+            if (currentUser.interests) {
+                currentUser.interests.forEach(interest => {
+                    const tag = document.querySelector(`.interest-tag[data-interest="${interest}"]`);
+                    if (tag) {
+                        tag.classList.add('selected');
+                    }
+                });
+            }
+            
+            // Show current profile picture if exists
+            if (currentUser.photo && currentUser.photo.startsWith('data:')) {
+                document.getElementById('preview-img').src = currentUser.photo;
+                document.getElementById('image-preview').style.display = 'block';
+            }
+        }
+
+        // Image preview functionality
+        document.getElementById('photo').addEventListener('change', function(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    document.getElementById('preview-img').src = e.target.result;
+                    document.getElementById('image-preview').style.display = 'block';
+                }
+                reader.readAsDataURL(file);
+            }
+        });
+
+        // Interest selection
+        document.querySelectorAll('.interest-tag').forEach(tag => {
+            tag.addEventListener('click', () => {
+                tag.classList.toggle('selected');
+                const interest = tag.dataset.interest;
+                
+                if (tag.classList.contains('selected')) {
+                    if (!selectedInterests.includes(interest)) {
+                        selectedInterests.push(interest);
+                    }
+                } else {
+                    selectedInterests = selectedInterests.filter(item => item !== interest);
+                }
+            });
+        });
+
+        // Profile setup form submission
+        document.getElementById('profile-setup-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            if (selectedInterests.length === 0) {
+                alert('Please select at least one interest');
+                return;
+            }
+
+            const photoFile = document.getElementById('photo').files[0];
+            let photoData = currentUser.photo; // Keep existing photo if no new one selected
+
+            // Convert new image to base64 if selected
+            if (photoFile) {
+                photoData = await convertImageToBase64(photoFile);
+            }
+
+            if (!photoData && !isEditMode) {
+                alert('Please upload a profile picture');
+                return;
+            }
+            
+            // Update current user with profile data
+            currentUser.age = document.getElementById('age').value;
+            currentUser.sex = document.getElementById('sex').value;
+            currentUser.religion = document.getElementById('religion').value;
+            currentUser.bio = document.getElementById('bio').value;
+            currentUser.interests = selectedInterests;
+            currentUser.photo = photoData;
+            currentUser.profileCompleted = true;
+            currentUser.createdAt = currentUser.createdAt || new Date().toISOString();
+            currentUser.updatedAt = new Date().toISOString();
+            
+            // Update user in users list
+            const users = JSON.parse(localStorage.getItem('habeshaUsers') || '[]');
+            const userIndex = users.findIndex(u => u.id === currentUser.id);
+            if (userIndex !== -1) {
+                users[userIndex] = currentUser;
+                localStorage.setItem('habeshaUsers', JSON.stringify(users));
+            }
+            
+            // Add/update user in profiles list
+            const allProfiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            const userProfile = {
+                id: currentUser.id,
+                username: currentUser.username,
+                email: currentUser.email,
+                age: currentUser.age,
+                sex: currentUser.sex,
+                religion: currentUser.religion,
+                bio: currentUser.bio,
+                interests: currentUser.interests,
+                photo: currentUser.photo,
+                createdAt: currentUser.createdAt,
+                updatedAt: currentUser.updatedAt
+            };
+            
+            // Check if profile already exists
+            const existingProfileIndex = allProfiles.findIndex(p => p.id === currentUser.id);
+            if (existingProfileIndex !== -1) {
+                allProfiles[existingProfileIndex] = userProfile;
+            } else {
+                allProfiles.push(userProfile);
+            }
+            
+            localStorage.setItem('habeshaProfiles', JSON.stringify(allProfiles));
+            localStorage.setItem('currentUser', JSON.stringify(currentUser));
+            
+            // Write all profiles to text file
+            writeProfilesToTextFile();
+            
+            alert(isEditMode ? 'Profile updated successfully!' : 'Profile completed successfully!');
+            window.location.href = 'profile.html';
+        });
+
+        // Convert image to base64
+        function convertImageToBase64(file) {
+            return new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = error => reject(error);
+                reader.readAsDataURL(file);
+            });
+        }
+
+        // Write all profiles to a readable text file
+        function writeProfilesToTextFile() {
+            const profiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            
+            let textContent = `HABESHA DATING - ALL PROFILES\n`;
+            textContent += `Generated on: ${new Date().toLocaleString()}\n`;
+            textContent += `Total Profiles: ${profiles.length}\n`;
+            textContent += `========================================\n\n`;
+            
+            profiles.forEach((profile, index) => {
+                textContent += `PROFILE #${index + 1}\n`;
+                textContent += `===============\n`;
+                textContent += `Username: ${profile.username}\n`;
+                textContent += `Email: ${profile.email}\n`;
+                textContent += `Age: ${profile.age}\n`;
+                textContent += `Sex: ${profile.sex}\n`;
+                textContent += `Religion: ${profile.religion}\n`;
+                textContent += `Bio: ${profile.bio}\n`;
+                textContent += `Interests: ${profile.interests.join(', ')}\n`;
+                textContent += `Profile Created: ${new Date(profile.createdAt).toLocaleString()}\n`;
+                textContent += `Last Updated: ${new Date(profile.updatedAt).toLocaleString()}\n`;
+                textContent += `Profile ID: ${profile.id}\n`;
+                textContent += `\n----------------------------------------\n\n`;
+            });
+            
+            // Create and download the text file
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `habesha_dating_profiles_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            // Also save to localStorage for easy access
+            localStorage.setItem('profilesTextFile', textContent);
+        }
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin - All Profiles</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+    <style>
+        .profiles-list {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: var(--card-shadow);
+            margin-top: 20px;
+        }
+        .profile-item {
+            border: 1px solid #ddd;
+            padding: 20px;
+            margin-bottom: 20px;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        .profile-item h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+        }
+        .profile-info {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+        }
+        .profile-info p {
+            margin: 5px 0;
+        }
+        .admin-actions {
+            margin-top: 20px;
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">Habesha Dating - Admin</div>
+            <div class="nav-links">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="explore.html" class="nav-link">Explore</a>
+                <a href="category.html" class="nav-link">Category</a>
+                <a href="profile.html" class="nav-link">Profile</a>
+                <a href="admin.html" class="nav-link active">Admin</a>
+                <a href="#" class="nav-link" id="logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="page-container">
+        <h1>Admin Panel - All User Profiles</h1>
+        
+        <div class="admin-actions">
+            <button class="btn" id="download-txt-btn">Download Profiles as Text File</button>
+            <button class="btn" id="download-json-btn">Download Profiles as JSON</button>
+            <button class="btn btn-danger" id="clear-all-btn">Clear All Data</button>
+        </div>
+
+        <div class="profiles-list" id="profiles-list">
+            <!-- Profiles will be displayed here -->
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        function loadAllProfiles() {
+            const profiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            const profilesList = document.getElementById('profiles-list');
+            
+            if (profiles.length === 0) {
+                profilesList.innerHTML = '<p>No profiles found.</p>';
+                return;
+            }
+
+            let html = `<h2>Total Profiles: ${profiles.length}</h2>`;
+            
+            profiles.forEach((profile, index) => {
+                html += `
+                    <div class="profile-item">
+                        <h3>Profile #${index + 1} - ${profile.username}</h3>
+                        <div class="profile-info">
+                            <div>
+                                <p><strong>Email:</strong> ${profile.email}</p>
+                                <p><strong>Age:</strong> ${profile.age}</p>
+                                <p><strong>Sex:</strong> ${profile.sex}</p>
+                                <p><strong>Religion:</strong> ${profile.religion}</p>
+                            </div>
+                            <div>
+                                <p><strong>Interests:</strong> ${profile.interests.join(', ')}</p>
+                                <p><strong>Created:</strong> ${new Date(profile.createdAt).toLocaleString()}</p>
+                                <p><strong>Last Updated:</strong> ${new Date(profile.updatedAt).toLocaleString()}</p>
+                                <p><strong>ID:</strong> ${profile.id}</p>
+                            </div>
+                        </div>
+                        <p><strong>Bio:</strong> ${profile.bio}</p>
+                    </div>
+                `;
+            });
+            
+            profilesList.innerHTML = html;
+        }
+
+        // Download as text file
+        document.getElementById('download-txt-btn').addEventListener('click', () => {
+            const profiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            
+            let textContent = `HABESHA DATING - ALL PROFILES\n`;
+            textContent += `Generated on: ${new Date().toLocaleString()}\n`;
+            textContent += `Total Profiles: ${profiles.length}\n`;
+            textContent += `========================================\n\n`;
+            
+            profiles.forEach((profile, index) => {
+                textContent += `PROFILE #${index + 1}\n`;
+                textContent += `===============\n`;
+                textContent += `Username: ${profile.username}\n`;
+                textContent += `Email: ${profile.email}\n`;
+                textContent += `Age: ${profile.age}\n`;
+                textContent += `Sex: ${profile.sex}\n`;
+                textContent += `Religion: ${profile.religion}\n`;
+                textContent += `Bio: ${profile.bio}\n`;
+                textContent += `Interests: ${profile.interests.join(', ')}\n`;
+                textContent += `Profile Created: ${new Date(profile.createdAt).toLocaleString()}\n`;
+                textContent += `Last Updated: ${new Date(profile.updatedAt).toLocaleString()}\n`;
+                textContent += `Profile ID: ${profile.id}\n`;
+                textContent += `\n----------------------------------------\n\n`;
+            });
+            
+            const blob = new Blob([textContent], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `habesha_dating_all_profiles_${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        // Download as JSON
+        document.getElementById('download-json-btn').addEventListener('click', () => {
+            const profiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+            const exportData = {
+                exportedAt: new Date().toISOString(),
+                totalProfiles: profiles.length,
+                profiles: profiles
+            };
+
+            const dataStr = JSON.stringify(exportData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `habesha_dating_profiles_${new Date().toISOString().split('T')[0]}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+        });
+
+        // Clear all data
+        document.getElementById('clear-all-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to clear ALL data? This cannot be undone!')) {
+                localStorage.clear();
+                alert('All data cleared successfully!');
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+
+        // Load profiles on page load
+        document.addEventListener('DOMContentLoaded', loadAllProfiles);
+    </script>
+</body>
+</html>

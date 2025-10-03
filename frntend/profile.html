@@ -1,0 +1,165 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Habesha Dating - Profile</title>
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <!-- Navigation Bar -->
+    <nav id="navbar">
+        <div class="nav-container">
+            <div class="logo">Habesha Dating</div>
+            <div class="nav-links">
+                <a href="home.html" class="nav-link">Home</a>
+                <a href="explore.html" class="nav-link">Explore</a>
+                <a href="category.html" class="nav-link">Category</a>
+                <a href="profile.html" class="nav-link active">Profile</a>
+                <a href="#" class="nav-link" id="logout-btn">Logout</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Profile Page Content -->
+    <div class="page-container">
+        <div class="profile-page">
+            <div class="profile-header">
+                <img src="" alt="Profile Picture" class="profile-picture" id="profile-picture">
+                <div class="profile-details">
+                    <h2 id="profile-name">User Name</h2>
+                    <p id="profile-age">Age: </p>
+                    <p id="profile-sex">Sex: </p>
+                    <p id="profile-religion">Religion: </p>
+                </div>
+            </div>
+            <div class="profile-bio">
+                <h3>About Me</h3>
+                <p id="profile-bio-text">This is my bio...</p>
+            </div>
+            <div class="profile-interests">
+                <h3>Interests</h3>
+                <div id="profile-interests-list">
+                    <!-- Interests will be dynamically generated -->
+                </div>
+            </div>
+            <div class="profile-actions">
+                <button class="btn" id="edit-profile-btn">Edit Profile</button>
+                <button class="btn btn-secondary" id="export-data-btn">Export My Data</button>
+                <button class="btn btn-danger" id="delete-account-btn">Delete Account</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Check if user is logged in
+        const currentUser = JSON.parse(localStorage.getItem('currentUser'));
+        if (!currentUser) {
+            window.location.href = 'index.html';
+        }
+
+        // If user hasn't completed profile, redirect to setup
+        if (!currentUser.profileCompleted) {
+            window.location.href = 'profile-setup.html';
+        }
+
+        // Load user profile
+        function loadUserProfile() {
+            document.getElementById('profile-name').textContent = currentUser.username;
+            document.getElementById('profile-age').textContent = `Age: ${currentUser.age}`;
+            document.getElementById('profile-sex').textContent = `Sex: ${currentUser.sex}`;
+            document.getElementById('profile-religion').textContent = `Religion: ${currentUser.religion}`;
+            document.getElementById('profile-bio-text').textContent = currentUser.bio;
+            
+            // Set profile picture
+            if (currentUser.photo) {
+                document.getElementById('profile-picture').src = currentUser.photo;
+            }
+            
+            const interestsList = document.getElementById('profile-interests-list');
+            interestsList.innerHTML = '';
+            
+            if (currentUser.interests && currentUser.interests.length > 0) {
+                currentUser.interests.forEach(interest => {
+                    const interestBadge = document.createElement('span');
+                    interestBadge.className = 'interest-badge';
+                    interestBadge.textContent = interest;
+                    interestsList.appendChild(interestBadge);
+                });
+            } else {
+                interestsList.innerHTML = '<p>No interests selected yet.</p>';
+            }
+        }
+
+        // Edit profile button
+        document.getElementById('edit-profile-btn').addEventListener('click', () => {
+            window.location.href = 'profile-setup.html';
+        });
+
+        // Export data functionality
+        document.getElementById('export-data-btn').addEventListener('click', () => {
+            const userData = {
+                userInfo: {
+                    username: currentUser.username,
+                    email: currentUser.email,
+                    age: currentUser.age,
+                    sex: currentUser.sex,
+                    religion: currentUser.religion,
+                    bio: currentUser.bio,
+                    interests: currentUser.interests
+                },
+                exportDate: new Date().toISOString()
+            };
+            
+            const dataStr = JSON.stringify(userData, null, 2);
+            const dataBlob = new Blob([dataStr], { type: 'application/json' });
+            const url = URL.createObjectURL(dataBlob);
+            const link = document.createElement('a');
+            link.href = url;
+            link.download = `habesha-dating-profile-${currentUser.username}.json`;
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            
+            alert('Your data has been exported successfully!');
+        });
+
+        // Delete account functionality
+        document.getElementById('delete-account-btn').addEventListener('click', () => {
+            if (confirm('Are you sure you want to delete your account? This action cannot be undone.')) {
+                // Remove user from habeshaUsers
+                const users = JSON.parse(localStorage.getItem('habeshaUsers') || '[]');
+                const updatedUsers = users.filter(user => user.id !== currentUser.id);
+                localStorage.setItem('habeshaUsers', JSON.stringify(updatedUsers));
+                
+                // Remove user from habeshaProfiles
+                const profiles = JSON.parse(localStorage.getItem('habeshaProfiles') || '[]');
+                const updatedProfiles = profiles.filter(profile => profile.id !== currentUser.id);
+                localStorage.setItem('habeshaProfiles', JSON.stringify(updatedProfiles));
+                
+                // Export updated profiles to JSON
+                const dataStr = JSON.stringify(updatedProfiles, null, 2);
+                localStorage.setItem('profilesBackup', dataStr);
+                
+                // Remove current user
+                localStorage.removeItem('currentUser');
+                
+                alert('Account deleted successfully');
+                window.location.href = 'index.html';
+            }
+        });
+
+        // Logout functionality
+        document.getElementById('logout-btn').addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('currentUser');
+            window.location.href = 'index.html';
+        });
+
+        // Load profile on page load
+        document.addEventListener('DOMContentLoaded', loadUserProfile);
+    </script>
+</body>
+</html>
